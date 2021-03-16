@@ -2071,6 +2071,7 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	uart_add_one_port(&s3c24xx_uart_drv, &ourport->port);
 	platform_set_drvdata(pdev, &ourport->port);
 
+#if 0
 	/*
 	 * Deactivate the clock enabled in s3c24xx_serial_init_port here,
 	 * so that a potential re-enablement through the pm-callback overlaps
@@ -2079,6 +2080,7 @@ static int s3c24xx_serial_probe(struct platform_device *pdev)
 	clk_disable_unprepare(ourport->clk);
 	if (!IS_ERR(ourport->baudclk))
 		clk_disable_unprepare(ourport->baudclk);
+#endif
 
 	ret = s3c24xx_serial_cpufreq_register(ourport);
 	if (ret < 0)
