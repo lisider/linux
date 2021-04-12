@@ -296,7 +296,15 @@ static struct platform_device s3c_device_dm9000 = {
 };
 #endif //#ifdef CONFIG_DM9000
 
-static struct map_desc smdk6410_iodesc[] = {};
+static struct map_desc smdk6410_iodesc[] = {
+	{
+		/* LCD support */
+		.virtual    = (unsigned long)S3C_VA_LCD,
+		.pfn        = __phys_to_pfn(S3C_PA_FB),
+		.length     = SZ_16K,
+		.type       = MT_DEVICE,
+	},
+};
 
 static struct platform_device *smdk6410_devices[] __initdata = {
 #ifdef CONFIG_SMDK6410_SD_CH0
