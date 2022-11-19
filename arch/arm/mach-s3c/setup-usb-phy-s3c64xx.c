@@ -25,11 +25,20 @@ static int s3c_usb_otgphy_init(struct platform_device *pdev)
 	struct clk *xusbxti;
 	u32 phyclk;
 
+    // STEP1
+    // 强制要求,必须做
+    // PA : 0x7E00_F900 VA :0xF6000000 + 0x00100000 + 0x900
+    // USB signal mask to prevent unwanted leakage.
+    // This bit must set before USB PHY is used.
 	writel(readl(S3C64XX_OTHERS) | S3C64XX_OTHERS_USBMASK, S3C64XX_OTHERS);
 
+    // STEP2
+    // PA : 0x7C10_0004 VA :0xF6000000 + 0x00500000 + 0x00200000 + 0x4
+    // Reference Clock Frequency Select for PLL
 	/* set clock frequency for PLL */
 	phyclk = readl(S3C_PHYCLK) & ~S3C_PHYCLK_CLKSEL_MASK;
 
+    // 48MHz From external AD7 & AD8
 	xusbxti = clk_get(&pdev->dev, "xusbxti");
 	if (!IS_ERR(xusbxti)) {
 		switch (clk_get_rate(xusbxti)) {
@@ -40,20 +49,35 @@ static int s3c_usb_otgphy_init(struct platform_device *pdev)
 			phyclk |= S3C_PHYCLK_CLKSEL_24M;
 			break;
 		default:
-		case 48 * MHZ:
+		case 48 * MHZ: // IN
 			/* default reference clock */
 			break;
 		}
 		clk_put(xusbxti);
 	}
 
+    // 将外面接的时钟频率信息 设置 OPHYCLK , 这个时钟供给给 两个 PHY
+    // 48MHz clock on clk48m_ohci is available at all times, even in Suspend mode.
 	/* TODO: select external clock/oscillator */
 	writel(phyclk | S3C_PHYCLK_CLK_FORCE, S3C_PHYCLK);
 
+
+    // STEP3
+    // 相当于 打开了 USB 2.0 的 PHY 和 USB 1.0 的 PHY, 并设置 suepend 不断电
+    // PA :0x7C10_0000 VA : 0xF6000000 + 0x00500000 + 0x00200000 + 0x0
+    // Apply Suspend signal for power save : disable ( Normal Operation )
+    // Analog block power down in PHY2.0 : Analog block power up (Normal Operation)     // USB 1.1 Transceiver UP
+    // OTG block power down in PHY2.0 : OTG block power up                              // USB 2.0 OTG PHY UP , 这个为1 也可,毕竟现在只用USB host,不用USB otg
 	/* set to normal OTG PHY */
 	writel((readl(S3C_PHYPWR) & ~S3C_PHYPWR_NORMAL_MASK), S3C_PHYPWR);
 	mdelay(1);
 
+    // STEP4
+    // 复位 两个phy
+    // PA :0x7C10_0008 VA : 0xF6000000 + 0x00500000 + 0x00200000 + 0x8
+    // OTG PHY 2.0 S/W Reset
+    // OTG Link Core hclk domain S/W Reset
+    // OTG Link Core phy_clock domain S/W Reset
 	/* reset OTG PHY and Link */
 	writel(S3C_RSTCON_PHY | S3C_RSTCON_HCLK | S3C_RSTCON_PHYCLK,
 			S3C_RSTCON);
