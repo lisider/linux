@@ -30,7 +30,7 @@ Simple(){
     # 1. checkout if build
     [ ! -e init/main.o ]  \
         && echo please build kernel first \
-        && exit -2
+        && return
 
     Progress_bar_number=1
     progress_bar=`yes '#' | head -n ${Progress_bar_number} \
@@ -160,6 +160,14 @@ Simple_with_log(){
     cp log_simple ${SIMPLE_SOURCE_DIR}
 }
 
+ShowConfig(){
+    echo
+    ls arch/${ARCH}/configs/ok6410A* | \
+        xargs -n 1 | \
+        awk -F '/' '{print $4}'
+    echo
+}
+
 Config(){
     if [ $# -eq 0 ];then
         :
@@ -177,13 +185,12 @@ Config(){
         done
 
         echo not supported
-        exit -1
+        return
     fi
 
     echo CONFIG is ${DEF_CONFIG}
     [ ! -f arch/${ARCH}/configs/${DEF_CONFIG} ] && \
-        echo arch/${ARCH}/configs/${DEF_CONFIG} not exist && \
-        exit -2
+        echo arch/${ARCH}/configs/${DEF_CONFIG} not exist && ShowConfig && return
 
     sleep 1
     [ -f log_config ] && mv log_config log_config_bak
