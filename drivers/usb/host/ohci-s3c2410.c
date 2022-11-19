@@ -388,6 +388,9 @@ static int ohci_hcd_s3c2410_probe(struct platform_device *dev)
 		goto err_put;
 	}
 
+    extern int s3c_usb_phy_init(struct platform_device *pdev, int type);
+    s3c_usb_phy_init(dev,0);
+
 	s3c2410_start_hc(dev, hcd);
 
 	retval = usb_add_hcd(hcd, dev->resource[1].start, 0);
