@@ -42,7 +42,7 @@
 static const char hcd_name[] = "ohci-s3c2410";
 
 static struct clk *clk;
-static struct clk *otg_clk, *usb_clk;
+static struct clk *usb_clk;
 
 static struct hc_driver __read_mostly ohci_s3c2410_hc_driver;
 
@@ -62,9 +62,6 @@ static void s3c2410_start_hc(struct platform_device *dev, struct usb_hcd *hcd)
 	struct s3c2410_hcd_info *info = dev_get_platdata(&dev->dev);
 
 	dev_dbg(&dev->dev, "s3c2410_start_hc:\n");
-	clk_prepare_enable(otg_clk);
-	extern int s3c_usb_phy_init(struct platform_device *pdev, int type);
-	s3c_usb_phy_init(dev,0);
 
 	clk_prepare_enable(usb_clk);
 	mdelay(2);			/* let the bus clock stabilise */
@@ -96,7 +93,6 @@ static void s3c2410_stop_hc(struct platform_device *dev)
 
 	clk_disable_unprepare(clk);
 	clk_disable_unprepare(usb_clk);
-	clk_disable_unprepare(otg_clk);
 }
 
 /* ohci_s3c2410_hub_status_data
@@ -389,13 +385,6 @@ static int ohci_hcd_s3c2410_probe(struct platform_device *dev)
 	if (IS_ERR(usb_clk)) {
 		dev_err(&dev->dev, "cannot get usb-bus-host clock\n");
 		retval = PTR_ERR(usb_clk);
-		goto err_put;
-	}
-
-	otg_clk = devm_clk_get(&dev->dev, "otg");
-	if (IS_ERR(otg_clk)) {
-		dev_err(&dev->dev, "cannot get otg clock\n");
-		retval = PTR_ERR(otg_clk);
 		goto err_put;
 	}
 
