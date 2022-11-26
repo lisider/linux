@@ -10,7 +10,7 @@
 Env_arm32(){
     ARCH=arm
     CROSS_COMPILE=arm-linux-gnueabi-
-    DEF_CONFIG=ok6410A_sdboot_mini_defconfig
+    DEF_CONFIG=ok6410A_sdboot_updating_defconfig
     TARGET=uImage
     PLATFORM_SPECIFIC=
     GDB=gdb-multiarch
@@ -213,6 +213,10 @@ Build(){
         V=1 \
         2>&1 | tee -a  log_build
 
+    [ -f arch/${ARCH}/boot/uImage ] && cp arch/${ARCH}/boot/uImage  /srv/tftp/
+}
+
+Setup(){
     [ -f arch/${ARCH}/boot/uImage ] && cp arch/${ARCH}/boot/uImage  /srv/tftp/
 }
 
